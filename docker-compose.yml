@@ -1,0 +1,32 @@
+services:
+  php:
+    image: php84
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./src:/var/www/html
+    environment:
+      - AWS_ACCESS_KEY_ID=your_key
+      - AWS_SECRET_ACCESS_KEY=your_secret
+      - AWS_DEFAULT_REGION=us-east-1
+    depends_on:
+      - mongodb
+      - rabbitmq
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
