@@ -1,0 +1,104 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 4.09kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/php:8.4-apache
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [ 1/25] FROM docker.io/library/php:8.4-apache
+#4 DONE 0.0s
+
+#5 [ 2/25] RUN ln -snf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && echo America/Sao_Paulo > /etc/timezone
+#5 CACHED
+
+#6 [internal] load build context
+#6 transferring context: 4.31kB done
+#6 DONE 0.0s
+
+#7 [ 3/25] RUN apt-get update && apt-get install -y --no-install-recommends     libpq-dev     libfreetype6-dev     libjpeg62-turbo-dev     libpng-dev     libwebp-dev     libxpm-dev     libffi-dev     libzip-dev     libbz2-dev     libgmp-dev     libgd-dev     libicu-dev     libldap2-dev     libsasl2-dev     libssl-dev     libmcrypt-dev     libmagickwand-dev     libtidy-dev     libxslt1-dev     libonig-dev     libssh2-1-dev     unixodbc-dev     libiodbc2-dev     freetds-dev     postgresql-client     git     curl     wget     zip     unzip     sendmail     && rm -rf /var/lib/apt/lists/*
+#7 0.229 Get:1 http://deb.debian.org/debian trixie InRelease [140 kB]
+#7 0.252 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+#7 0.254 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+#7 0.278 Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9670 kB]
+#7 1.140 Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
+#7 1.141 Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [71.8 kB]
+#7 2.015 Fetched 9978 kB in 2s (5534 kB/s)
+#7 2.015 Reading package lists...
+#7 2.581 Reading package lists...
+#7 3.199 Building dependency tree...
+#7 3.329 Reading state information...
+#7 3.610 Solving dependencies...
+#7 3.653 Some packages could not be installed. This may mean that you have
+#7 3.653 requested an impossible situation or if you are using the unstable
+#7 3.653 distribution that some required packages have not yet been created
+#7 3.653 or been moved out of Incoming.
+#7 3.653 The following information may help to resolve the situation:
+#7 3.653 
+#7 3.653 The following packages have unmet dependencies:
+#7 3.653  unixodbc-dev : Conflicts: libiodbc2-dev but 3.52.9-4+b2 is to be installed
+#7 3.655 E: Unable to correct problems, you have held broken packages.
+#7 3.655 E: The following information from --solver 3.0 may provide additional context:
+#7 3.655    Unable to satisfy dependencies. Reached two conflicting decisions:
+#7 3.655    1. libiodbc2-dev:amd64=3.52.9-4+b2 is selected for install
+#7 3.655    2. libiodbc2-dev:amd64=3.52.9-4+b2 is not selected for install because:
+#7 3.655       1. unixodbc-dev:amd64=2.3.12-2 is selected for install
+#7 3.655       2. unixodbc-dev:amd64 Conflicts libiodbc2-dev
+#7 ERROR: process "/bin/sh -c apt-get update && apt-get install -y --no-install-recommends     libpq-dev     libfreetype6-dev     libjpeg62-turbo-dev     libpng-dev     libwebp-dev     libxpm-dev     libffi-dev     libzip-dev     libbz2-dev     libgmp-dev     libgd-dev     libicu-dev     libldap2-dev     libsasl2-dev     libssl-dev     libmcrypt-dev     libmagickwand-dev     libtidy-dev     libxslt1-dev     libonig-dev     libssh2-1-dev     unixodbc-dev     libiodbc2-dev     freetds-dev     postgresql-client     git     curl     wget     zip     unzip     sendmail     && rm -rf /var/lib/apt/lists/*" did not complete successfully: exit code: 100
+------
+ > [ 3/25] RUN apt-get update && apt-get install -y --no-install-recommends     libpq-dev     libfreetype6-dev     libjpeg62-turbo-dev     libpng-dev     libwebp-dev     libxpm-dev     libffi-dev     libzip-dev     libbz2-dev     libgmp-dev     libgd-dev     libicu-dev     libldap2-dev     libsasl2-dev     libssl-dev     libmcrypt-dev     libmagickwand-dev     libtidy-dev     libxslt1-dev     libonig-dev     libssh2-1-dev     unixodbc-dev     libiodbc2-dev     freetds-dev     postgresql-client     git     curl     wget     zip     unzip     sendmail     && rm -rf /var/lib/apt/lists/*:
+3.653 
+3.653 The following packages have unmet dependencies:
+3.653  unixodbc-dev : Conflicts: libiodbc2-dev but 3.52.9-4+b2 is to be installed
+3.655 E: Unable to correct problems, you have held broken packages.
+3.655 E: The following information from --solver 3.0 may provide additional context:
+3.655    Unable to satisfy dependencies. Reached two conflicting decisions:
+3.655    1. libiodbc2-dev:amd64=3.52.9-4+b2 is selected for install
+3.655    2. libiodbc2-dev:amd64=3.52.9-4+b2 is not selected for install because:
+3.655       1. unixodbc-dev:amd64=2.3.12-2 is selected for install
+3.655       2. unixodbc-dev:amd64 Conflicts libiodbc2-dev
+------
+Dockerfile:8
+--------------------
+   7 |     # Instalar dependências do sistema
+   8 | >>> RUN apt-get update && apt-get install -y --no-install-recommends \
+   9 | >>>     libpq-dev \
+  10 | >>>     libfreetype6-dev \
+  11 | >>>     libjpeg62-turbo-dev \
+  12 | >>>     libpng-dev \
+  13 | >>>     libwebp-dev \
+  14 | >>>     libxpm-dev \
+  15 | >>>     libffi-dev \
+  16 | >>>     libzip-dev \
+  17 | >>>     libbz2-dev \
+  18 | >>>     libgmp-dev \
+  19 | >>>     libgd-dev \
+  20 | >>>     libicu-dev \
+  21 | >>>     libldap2-dev \
+  22 | >>>     libsasl2-dev \
+  23 | >>>     libssl-dev \
+  24 | >>>     libmcrypt-dev \
+  25 | >>>     libmagickwand-dev \
+  26 | >>>     libtidy-dev \
+  27 | >>>     libxslt1-dev \
+  28 | >>>     libonig-dev \
+  29 | >>>     libssh2-1-dev \
+  30 | >>>     unixodbc-dev \
+  31 | >>>     libiodbc2-dev \
+  32 | >>>     freetds-dev \
+  33 | >>>     postgresql-client \
+  34 | >>>     git \
+  35 | >>>     curl \
+  36 | >>>     wget \
+  37 | >>>     zip \
+  38 | >>>     unzip \
+  39 | >>>     sendmail \
+  40 | >>>     && rm -rf /var/lib/apt/lists/*
+  41 |     
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c apt-get update && apt-get install -y --no-install-recommends     libpq-dev     libfreetype6-dev     libjpeg62-turbo-dev     libpng-dev     libwebp-dev     libxpm-dev     libffi-dev     libzip-dev     libbz2-dev     libgmp-dev     libgd-dev     libicu-dev     libldap2-dev     libsasl2-dev     libssl-dev     libmcrypt-dev     libmagickwand-dev     libtidy-dev     libxslt1-dev     libonig-dev     libssh2-1-dev     unixodbc-dev     libiodbc2-dev     freetds-dev     postgresql-client     git     curl     wget     zip     unzip     sendmail     && rm -rf /var/lib/apt/lists/*" did not complete successfully: exit code: 100

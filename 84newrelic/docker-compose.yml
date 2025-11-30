@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  php-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: php_app_newrelic
+    environment:
+      # Configurações do New Relic
+      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+      - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME:-Minha Aplicacao PHP}
+      - NEW_RELIC_ENABLED=${NEW_RELIC_ENABLED:-true}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./src:/var/www/html
+      - ./logs/apache:/var/log/apache2
+      - ./logs/newrelic:/var/log/newrelic
+    restart: unless-stopped
