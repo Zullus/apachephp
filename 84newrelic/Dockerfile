@@ -9,6 +9,9 @@ ENV NEW_RELIC_LICENSE_KEY="" \
     NEW_RELIC_APP_NAME="Minha Aplicacao PHP" \
     NEW_RELIC_ENABLED=true
 
+# Variável para controlar Xdebug (desligado por padrão para não conflitar com New Relic)
+ENV XDEBUG_ENABLED=false
+
 # Atualizar sistema e instalar dependências
 RUN apt-get update && apt-get install -y \
     # Ferramentas básicas
@@ -62,9 +65,12 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar extensões PECL
-RUN pecl install redis memcached xdebug mongodb amqp \
-    && docker-php-ext-enable redis memcached xdebug mongodb amqp
+# Instalar extensões PECL (sem xdebug por enquanto)
+RUN pecl install redis memcached mongodb amqp \
+    && docker-php-ext-enable redis memcached mongodb amqp
+
+# Instalar Xdebug mas NÃO habilitar automaticamente
+RUN pecl install xdebug
 
 # ========================================
 # INSTALAÇÃO DO NEW RELIC
@@ -121,9 +127,6 @@ RUN composer global require aws/aws-sdk-php \
 # Habilitar módulos Apache necessários
 RUN a2enmod rewrite headers
 
-# Copiar php.ini de desenvolvimento
-#COPY php.ini $PHP_INI_DIR/php.ini
-
 # Configurar VirtualHost padrão para desenvolvimento
 RUN echo '<VirtualHost *:80>\n\
     ServerAdmin webmaster@localhost\n\
@@ -141,6 +144,55 @@ RUN echo '<VirtualHost *:80>\n\
 
 # Criar diretório para logs do Xdebug
 RUN mkdir -p /tmp/xdebug && chown www-data:www-data /tmp/xdebug
+
+# Criar script para habilitar/desabilitar Xdebug
+COPY <<'EOF' /usr/local/bin/toggle-xdebug.sh
+#!/bin/bash
+set -e
+
+XDEBUG_INI="/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini"
+
+if [ "$1" = "on" ]; then
+    echo "🐛 Habilitando Xdebug..."
+    docker-php-ext-enable xdebug
+    
+    # Configurar Xdebug
+    cat > $XDEBUG_INI <<'XDEBUG_CONFIG'
+zend_extension=xdebug.so
+xdebug.mode=debug,develop
+xdebug.start_with_request=yes
+xdebug.client_host=host.docker.internal
+xdebug.client_port=9003
+xdebug.log=/tmp/xdebug/xdebug.log
+XDEBUG_CONFIG
+    
+    echo "⚠️  ATENÇÃO: Xdebug habilitado - New Relic NÃO capturará erros!"
+    echo "⚠️  Para produção, use: toggle-xdebug.sh off"
+    
+elif [ "$1" = "off" ]; then
+    echo "🔧 Desabilitando Xdebug..."
+    if [ -f "$XDEBUG_INI" ]; then
+        rm -f "$XDEBUG_INI"
+    fi
+    echo "✅ Xdebug desabilitado - New Relic funcionando normalmente"
+    
+else
+    echo "Uso: toggle-xdebug.sh [on|off]"
+    echo ""
+    echo "  on  - Habilita Xdebug (desenvolvimento)"
+    echo "  off - Desabilita Xdebug (produção/New Relic)"
+    exit 1
+fi
+
+# Recarregar Apache
+if [ -f /var/run/apache2/apache2.pid ]; then
+    kill -USR1 $(cat /var/run/apache2/apache2.pid) 2>/dev/null || true
+fi
+
+echo "✅ Pronto! Reinicie o Apache se necessário."
+EOF
+
+RUN chmod +x /usr/local/bin/toggle-xdebug.sh
 
 # Criar script para habilitar SSL
 COPY <<'EOF' /usr/local/bin/enable-ssl.sh
@@ -217,10 +269,22 @@ echo "📊 Configurações importantes:"
 echo "   - Display Errors: $(php -r 'echo ini_get("display_errors") ? "ON" : "OFF";')"
 echo "   - Memory Limit: $(php -r 'echo ini_get("memory_limit");')"
 echo "   - Upload Max: $(php -r 'echo ini_get("upload_max_filesize");')"
-echo "   - Xdebug: $(php -r 'echo extension_loaded("xdebug") ? "Instalado" : "Não instalado";')"
 echo "   - MongoDB: $(php -r 'echo extension_loaded("mongodb") ? "Instalado" : "Não instalado";')"
 echo "   - AMQP (RabbitMQ): $(php -r 'echo extension_loaded("amqp") ? "Instalado" : "Não instalado";')"
-echo "   - New Relic: $(php -r 'echo extension_loaded("newrelic") ? "Instalado ✅" : "Não instalado";')"
+echo ""
+
+# Gerenciar Xdebug com base na variável de ambiente
+if [ "$XDEBUG_ENABLED" = "true" ]; then
+    echo "🐛 Xdebug: Habilitando (modo desenvolvimento)..."
+    /usr/local/bin/toggle-xdebug.sh on > /dev/null 2>&1
+    echo "   - Xdebug: ✅ Habilitado"
+    echo "   ⚠️  New Relic NÃO capturará erros com Xdebug ativo!"
+else
+    echo "🐛 Xdebug: Desabilitado (modo produção)"
+    /usr/local/bin/toggle-xdebug.sh off > /dev/null 2>&1
+    echo "   - Xdebug: ❌ Desabilitado"
+fi
+
 echo ""
 echo "🔧 Ferramentas instaladas:"
 echo "   - Composer: $(composer --version | head -n1)"
@@ -231,14 +295,20 @@ echo ""
 if [ -n "$NEW_RELIC_LICENSE_KEY" ] && [ "$NEW_RELIC_ENABLED" = "true" ]; then
     echo "📡 New Relic configurado:"
     echo "   - App Name: $NEW_RELIC_APP_NAME"
-    echo "   - Status: Ativo"
+    echo "   - Status: ✅ Ativo"
     echo "   - Logs: /var/log/newrelic/"
+    if [ "$XDEBUG_ENABLED" = "true" ]; then
+        echo "   ⚠️  AVISO: Xdebug habilitado - erros NÃO serão capturados!"
+    fi
 else
-    echo "⚠️  New Relic não configurado (defina NEW_RELIC_LICENSE_KEY)"
+    echo "📡 New Relic: ⚠️  Não configurado (defina NEW_RELIC_LICENSE_KEY)"
 fi
 
 echo ""
-echo "🔧 Para habilitar SSL, execute: docker exec <container> enable-ssl.sh"
+echo "🔧 Comandos úteis:"
+echo "   - Habilitar SSL: docker exec <container> enable-ssl.sh"
+echo "   - Habilitar Xdebug: docker exec <container> toggle-xdebug.sh on"
+echo "   - Desabilitar Xdebug: docker exec <container> toggle-xdebug.sh off"
 echo ""
 
 # Executar comando original do Apache

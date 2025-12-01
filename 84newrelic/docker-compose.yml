@@ -12,8 +12,8 @@ services:
       - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME:-Minha Aplicacao PHP}
       - NEW_RELIC_ENABLED=${NEW_RELIC_ENABLED:-true}
     ports:
-      - "80:80"
-      - "443:443"
+      - "8800:80"
+      - "8443:443"
     volumes:
       - ./src:/var/www/html
       - ./logs/apache:/var/log/apache2
